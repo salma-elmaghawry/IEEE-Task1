@@ -6,6 +6,8 @@ class AuthTextField extends StatelessWidget {
   final TextInputType? keyboardType;
   final bool obscureText;
   final String? Function(String?)? validator;
+  final VoidCallback? onToggleVisibility;
+  final bool? showVisibilityToggle;
 
   const AuthTextField({
     super.key,
@@ -14,25 +16,36 @@ class AuthTextField extends StatelessWidget {
     this.keyboardType,
     this.obscureText = false,
     this.validator,
+    this.onToggleVisibility,
+    this.showVisibilityToggle = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return TextFormField(
-      controller: controller,
-      decoration: InputDecoration(
-        hintText: hintText,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8.0),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextFormField(
+          controller: controller,
+          keyboardType: keyboardType,
+          obscureText: obscureText,
+          validator: validator,
+          decoration: InputDecoration(
+            hintText: hintText,
+            border: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(vertical: 8),
+            suffixIcon: showVisibilityToggle == true
+                ? IconButton(
+                    icon: Icon(
+                      obscureText ? Icons.visibility_off : Icons.visibility,
+                    ),
+                    onPressed: onToggleVisibility,
+                  )
+                : null,
+          ),
         ),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16.0,
-          vertical: 12.0,
-        ),
-      ),
-      keyboardType: keyboardType,
-      obscureText: obscureText,
-      validator: validator,
+        const Divider(),
+      ],
     );
   }
 }

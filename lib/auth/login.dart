@@ -1,8 +1,18 @@
-import 'package:flutter/gestures.dart';
-import 'package:flutter/material.dart';
 import 'package:auth/auth/register.dart';
+import 'package:auth/auth/widgets/auth_header.dart';
+import 'package:auth/auth/widgets/auth_text_field.dart';
+import 'package:auth/auth/widgets/social_login_buttons.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -11,7 +21,6 @@ class LoginScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -20,42 +29,16 @@ class LoginScreen extends StatelessWidget {
         key: _formKey,
         child: Column(
           children: [
-            // Top Stack: background image + title
-            Stack(
-              children: [
-                Container(
-                  height: size.height * 0.32,
-                  width: double.infinity,
-                  decoration: const BoxDecoration(
-                    image: DecorationImage(
-                      image: AssetImage('assets/bg.png'),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-                Positioned(
-                  left: 32,
-                  bottom: 80,
-                  child: Text(
-                    'Login',
-                    style: theme.textTheme.headlineMedium?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 32,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+            const AuthHeader(title: 'Login', backgroundImage: 'assets/bg.png'),
             // White form container, scrollable and overlapping the Stack
             Expanded(
               child: Transform.translate(
-                offset: const Offset(0, -32), // Overlap effect
+                offset: const Offset(0, -32),
                 child: Container(
                   width: double.infinity,
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.vertical(
+                    borderRadius: const BorderRadius.vertical(
                       top: Radius.circular(24),
                     ),
                   ),
@@ -75,8 +58,9 @@ class LoginScreen extends StatelessWidget {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        TextFormField(
+                        AuthTextField(
                           controller: _emailController,
+                          hintText: 'Enter your email',
                           keyboardType: TextInputType.emailAddress,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
@@ -87,13 +71,7 @@ class LoginScreen extends StatelessWidget {
                             }
                             return null;
                           },
-                          decoration: const InputDecoration(
-                            hintText: 'Enter your email',
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.symmetric(vertical: 8),
-                          ),
                         ),
-                        const Divider(),
                         const SizedBox(height: 20),
                         // Password Field
                         Text(
@@ -102,65 +80,42 @@ class LoginScreen extends StatelessWidget {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        StatefulBuilder(
-                          builder: (context, setState) {
-                            return TextFormField(
-                              controller: _passwordController,
-                              obscureText: _obscurePassword,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter your password';
-                                }
-                                if (value.length < 8) {
-                                  return 'Password must be at least 8 characters';
-                                }
-                                return null;
-                              },
-                              decoration: InputDecoration(
-                                hintText: 'Enter your password',
-                                border: InputBorder.none,
-                                contentPadding: const EdgeInsets.symmetric(
-                                  vertical: 8,
-                                ),
-                                suffixIcon: IconButton(
-                                  icon: Icon(
-                                    _obscurePassword
-                                        ? Icons.visibility_off
-                                        : Icons.visibility,
-                                  ),
-                                  onPressed: () {
-                                    setState(() {
-                                      _obscurePassword = !_obscurePassword;
-                                    });
-                                  },
-                                ),
-                              ),
-                            );
+                        AuthTextField(
+                          controller: _passwordController,
+                          hintText: 'Enter your password',
+                          obscureText: _obscurePassword,
+                          showVisibilityToggle: true,
+                          onToggleVisibility: () {
+                            setState(() {
+                              _obscurePassword = !_obscurePassword;
+                            });
+                          },
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter your password';
+                            }
+                            if (value.length < 8) {
+                              return 'Password must be at least 8 characters';
+                            }
+                            return null;
                           },
                         ),
-                        const Divider(),
                         // Remember me & Forgot password
                         Row(
                           children: [
-                            StatefulBuilder(
-                              builder: (context, setState) {
-                                return Checkbox(
-                                  value: _rememberMe,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _rememberMe = value ?? false;
-                                    });
-                                  },
-                                  activeColor: Colors.orange,
-                                );
+                            Checkbox(
+                              value: _rememberMe,
+                              onChanged: (value) {
+                                setState(() {
+                                  _rememberMe = value ?? false;
+                                });
                               },
+                              activeColor: Colors.orange,
                             ),
                             const Text('Stay logged in?'),
                             const Spacer(),
                             TextButton(
-                              onPressed: () {
-                                // Add forgot password functionality
-                              },
+                              onPressed: () {},
                               child: Text(
                                 'Forgot Password?',
                                 style: TextStyle(color: Colors.grey[600]),
@@ -174,7 +129,7 @@ class LoginScreen extends StatelessWidget {
                           width: double.infinity,
                           child: ElevatedButton(
                             onPressed: _submitForm,
-                            child: Text(
+                            child: const Text(
                               'Login',
                               style: TextStyle(
                                 color: Colors.white,
@@ -222,46 +177,8 @@ class LoginScreen extends StatelessWidget {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 20),
-                        // Divider with text
-                        Row(
-                          children: [
-                            const Expanded(child: Divider()),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                              ),
-                              child: Text(
-                                'Or login with',
-                                style: TextStyle(color: Colors.grey[600]),
-                              ),
-                            ),
-                            const Expanded(child: Divider()),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
                         // Social login buttons
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            _buildSocialButton(
-                              icon: const Icon(Icons.g_mobiledata),
-                              onPressed: () {
-                                // Handle Google login
-                              },
-                            ),
-                            const SizedBox(width: 30),
-                            _buildSocialButton(
-                              icon: const Icon(
-                                Icons.facebook,
-                                color: Colors.blue,
-                              ),
-                              onPressed: () {
-                                // Handle Facebook login
-                              },
-                            ),
-                          ],
-                        ),
+                        const SocialLoginButtons(),
                       ],
                     ),
                   ),
@@ -274,31 +191,9 @@ class LoginScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSocialButton({
-    required Widget icon,
-    required VoidCallback onPressed,
-  }) {
-    return InkWell(
-      onTap: onPressed,
-      borderRadius: BorderRadius.circular(30),
-      child: CircleAvatar(
-        backgroundColor: Colors.grey[100],
-        radius: 24,
-        child: icon,
-      ),
-    );
-  }
-
   void _submitForm() {
     if (_formKey.currentState?.validate() ?? false) {
-      // Form is valid, proceed with login
-      print('Email: ${_emailController.text}');
-      print('Password: ${_passwordController.text}');
-      print('Remember me: $_rememberMe');
-      // Here you would typically:
-      // 1. Call your authentication service
-      // 2. Handle success/failure
-      // 3. Navigate to home screen on success
+      // Handle login logic
     }
   }
 }
