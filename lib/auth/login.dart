@@ -1,9 +1,8 @@
+import 'package:flutter/material.dart';
 import 'package:auth/auth/register.dart';
 import 'package:auth/auth/widgets/auth_header.dart';
-import 'package:auth/auth/widgets/auth_text_field.dart';
+import 'package:auth/auth/widgets/auth_shared_widgets.dart';
 import 'package:auth/auth/widgets/social_login_buttons.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/gestures.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -21,8 +20,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
       backgroundColor: Colors.white,
       body: Form(
@@ -30,15 +27,14 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Column(
           children: [
             const AuthHeader(title: 'Login', backgroundImage: 'assets/bg.png'),
-            // White form container, scrollable and overlapping the Stack
             Expanded(
               child: Transform.translate(
                 offset: const Offset(0, -32),
                 child: Container(
                   width: double.infinity,
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
                     color: Colors.white,
-                    borderRadius: const BorderRadius.vertical(
+                    borderRadius: BorderRadius.vertical(
                       top: Radius.circular(24),
                     ),
                   ),
@@ -48,68 +44,26 @@ class _LoginScreenState extends State<LoginScreen> {
                       vertical: 32,
                     ),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const SizedBox(height: 10),
-                        // Email Field
-                        Text(
+                        _buildTextField(
                           'Email',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                          _emailController,
+                          isEmail: true,
                         ),
-                        AuthTextField(
-                          controller: _emailController,
-                          hintText: 'Enter your email',
-                          keyboardType: TextInputType.emailAddress,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter your email';
-                            }
-                            if (!value.contains('@')) {
-                              return 'Please enter a valid email';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 20),
-                        // Password Field
-                        Text(
+                        _buildTextField(
                           'Password',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                          _passwordController,
+                          isPassword: true,
                         ),
-                        AuthTextField(
-                          controller: _passwordController,
-                          hintText: 'Enter your password',
-                          obscureText: _obscurePassword,
-                          showVisibilityToggle: true,
-                          onToggleVisibility: () {
-                            setState(() {
-                              _obscurePassword = !_obscurePassword;
-                            });
-                          },
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter your password';
-                            }
-                            if (value.length < 8) {
-                              return 'Password must be at least 8 characters';
-                            }
-                            return null;
-                          },
-                        ),
-                        // Remember me & Forgot password
                         Row(
                           children: [
                             Checkbox(
                               value: _rememberMe,
-                              onChanged: (value) {
-                                setState(() {
-                                  _rememberMe = value ?? false;
-                                });
-                              },
+                              onChanged:
+                                  (value) => setState(
+                                    () => _rememberMe = value ?? false,
+                                  ),
                               activeColor: Colors.orange,
                             ),
                             const Text('Stay logged in?'),
@@ -124,60 +78,22 @@ class _LoginScreenState extends State<LoginScreen> {
                           ],
                         ),
                         const SizedBox(height: 30),
-                        // Login Button
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: _submitForm,
-                            child: const Text(
-                              'Login',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.orange,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30),
-                              ),
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              elevation: 2,
-                            ),
-                          ),
-                        ),
+                        AuthButton(text: 'Login', onPressed: _submitForm),
                         const SizedBox(height: 16),
-                        // Register prompt
                         Center(
-                          child: RichText(
-                            text: TextSpan(
-                              text: "Don't have an account yet?  Register",
-                              style: const TextStyle(color: Colors.black),
-                              children: [
-                                TextSpan(
-                                  text: " here",
-                                  recognizer:
-                                      TapGestureRecognizer()
-                                        ..onTap = () {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder:
-                                                  (context) => RegisterScreen(),
-                                            ),
-                                          );
-                                        },
-                                  style: const TextStyle(
-                                    color: Colors.orange,
-                                    fontWeight: FontWeight.bold,
+                          child: AuthLinkText(
+                            prefixText: "Don't have an account yet? Register",
+                            linkText: " here",
+                            onTap:
+                                () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder:
+                                        (context) => const RegisterScreen(),
                                   ),
                                 ),
-                              ],
-                            ),
                           ),
                         ),
-                        // Social login buttons
                         const SocialLoginButtons(),
                       ],
                     ),
@@ -188,6 +104,55 @@ class _LoginScreenState extends State<LoginScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildTextField(
+    String label,
+    TextEditingController controller, {
+    bool isEmail = false,
+    bool isPassword = false,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        TextFormField(
+          controller: controller,
+          obscureText: isPassword ? _obscurePassword : false,
+          keyboardType: isEmail ? TextInputType.emailAddress : null,
+          decoration: InputDecoration(
+            hintText: 'Enter your ${label.toLowerCase()}',
+            suffixIcon:
+                isPassword
+                    ? IconButton(
+                      icon: Icon(
+                        _obscurePassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
+                      ),
+                      onPressed:
+                          () => setState(
+                            () => _obscurePassword = !_obscurePassword,
+                          ),
+                    )
+                    : null,
+          ),
+          validator: (value) {
+            if (value == null || value.isEmpty)
+              return 'Please enter your ${label.toLowerCase()}';
+            if (isEmail && !value.contains('@')) return 'Invalid email';
+            if (isPassword && value.length < 8) return 'Minimum 8 characters';
+            return null;
+          },
+        ),
+        const SizedBox(height: 20),
+      ],
     );
   }
 

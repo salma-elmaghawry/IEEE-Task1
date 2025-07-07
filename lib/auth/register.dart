@@ -1,10 +1,10 @@
 import 'dart:io';
-
-import 'package:auth/auth/login.dart';
-import 'package:auth/auth/widgets/auth_header.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:auth/auth/login.dart';
+import 'package:auth/auth/widgets/auth_header.dart';
+import 'package:auth/auth/widgets/auth_shared_widgets.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -15,29 +15,69 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _phoneController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
-  bool _obscurePassword = true;
-  bool _obscureConfirmPassword = true;
+  final _controllers = {
+    'name': TextEditingController(),
+    'email': TextEditingController(),
+    'phone': TextEditingController(),
+    'password': TextEditingController(),
+    'confirmPassword': TextEditingController(),
+  };
+  final _obscure = {'password': true, 'confirmPassword': true};
   File? _profileImage;
 
   Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    final pickedFile = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+    );
+    if (pickedFile != null)
+      setState(() => _profileImage = File(pickedFile.path));
+  }
 
-    if (pickedFile != null) {
-      setState(() {
-        _profileImage = File(pickedFile.path);
-      });
+  Widget _buildTextField(String label, String key, {bool isPassword = false}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: _controllers[key],
+          obscureText: isPassword ? _obscure[key]! : false,
+          keyboardType:
+              key == 'email'
+                  ? TextInputType.emailAddress
+                  : key == 'phone'
+                  ? TextInputType.phone
+                  : null,
+          decoration: InputDecoration(
+            hintText: 'Your $key',
+            border: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(vertical: 8),
+          ),
+          validator: (value) => _validateField(key, value),
+        ),
+        const Divider(),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+
+  String? _validateField(String key, String? value) {
+    if (value == null || value.isEmpty) return 'Please enter your $key';
+    if (key == 'email' && !value.contains('@')) return 'Invalid email';
+    if (key == 'password' && value.length < 8) return 'Minimum 8 characters';
+    if (key == 'confirmPassword' && value != _controllers['password']!.text) {
+      return 'Passwords don\'t match';
     }
+    return null;
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final size = MediaQuery.of(context).size;
     return Scaffold(
       backgroundColor: Colors.white,
@@ -45,282 +85,65 @@ class _RegisterScreenState extends State<RegisterScreen> {
         children: [
           Column(
             children: [
-              // Auth Header Only (no Stack)
-              Container(
-                height:
-                    size.height *
-                    0.25, // Reduced height to accommodate profile circle
-                width: double.infinity,
-                decoration: const BoxDecoration(
-                  image: DecorationImage(
-                    image: AssetImage('assets/bg.png'),
-                    fit: BoxFit.cover,
-                  ),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 32, bottom: 70),
-                  child: Align(
-                    alignment: Alignment.bottomLeft,
-                    child: Text(
-                      'Register',
-                      style: theme.textTheme.headlineMedium?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 32,
+              const AuthHeader(
+                title: 'Register',
+                backgroundImage: 'assets/bg.png',
+              ),
+              Expanded(
+                child: Transform.translate(
+                  offset: const Offset(0, -32),
+                  child: Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.only(top: 50),
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(24),
                       ),
                     ),
-                  ),
-                ),
-              ),
-              // White Container
-              Expanded(
-                child: Container(
-                  width: double.infinity,
-                  margin: const EdgeInsets.only(
-                    top: 50,
-                  ), // Space for profile circle
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(24),
-                    ),
-                  ),
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.only(
-                      top: 20,
-                      left: 24,
-                      right: 24,
-                      bottom: 32,
-                    ),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Name Field
-                          Text(
-                            'Name',
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          TextFormField(
-                            controller: _nameController,
-                            decoration: const InputDecoration(
-                              hintText: 'Your Name, e.g.: John Doe',
-                              border: InputBorder.none,
-                              contentPadding: EdgeInsets.symmetric(vertical: 8),
-                            ),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter your name';
-                              }
-                              return null;
-                            },
-                          ),
-                          const Divider(),
-                          const SizedBox(height: 16),
-
-                          // Email Field
-                          Text(
-                            'Email',
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          TextFormField(
-                            controller: _emailController,
-                            keyboardType: TextInputType.emailAddress,
-                            decoration: const InputDecoration(
-                              hintText: 'Your email, e.g.: johndoe@gmail.com',
-                              border: InputBorder.none,
-                              contentPadding: EdgeInsets.symmetric(vertical: 8),
-                            ),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter your email';
-                              }
-                              if (!value.contains('@')) {
-                                return 'Please enter a valid email';
-                              }
-                              return null;
-                            },
-                          ),
-                          const Divider(),
-                          const SizedBox(height: 16),
-
-                          // Phone Number Field
-                          Text(
-                            'Phone Number',
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          TextFormField(
-                            controller: _phoneController,
-                            keyboardType: TextInputType.phone,
-                            decoration: const InputDecoration(
-                              hintText:
-                                  'Your phone number, e.g.: +01 112 xxx xxx',
-                              border: InputBorder.none,
-                              contentPadding: EdgeInsets.symmetric(vertical: 8),
-                            ),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter your phone number';
-                              }
-                              return null;
-                            },
-                          ),
-                          const Divider(),
-                          const SizedBox(height: 16),
-
-                          // Password Field
-                          Text(
-                            'Password',
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          TextFormField(
-                            controller: _passwordController,
-                            obscureText: _obscurePassword,
-                            decoration: InputDecoration(
-                              hintText: 'Your password, at least 8 characters',
-                              border: InputBorder.none,
-                              contentPadding: const EdgeInsets.symmetric(
-                                vertical: 8,
-                              ),
-                              suffixIcon: IconButton(
-                                icon: Icon(
-                                  _obscurePassword
-                                      ? Icons.visibility_off
-                                      : Icons.visibility,
-                                ),
-                                onPressed: () {
-                                  setState(() {
-                                    _obscurePassword = !_obscurePassword;
-                                  });
-                                },
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          children: [
+                            ...['name', 'email', 'phone'].map(
+                              (e) => _buildTextField(
+                                e[0].toUpperCase() + e.substring(1),
+                                e,
                               ),
                             ),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter your password';
-                              }
-                              if (value.length < 8) {
-                                return 'Password must be at least 8 characters';
-                              }
-                              return null;
-                            },
-                          ),
-                          const Divider(),
-                          const SizedBox(height: 16),
-
-                          // Confirm Password Field
-                          Text(
-                            'Confirm Password',
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
+                            _buildTextField(
+                              'Password',
+                              'password',
+                              isPassword: true,
                             ),
-                          ),
-                          const SizedBox(height: 8),
-                          TextFormField(
-                            controller: _confirmPasswordController,
-                            obscureText: _obscureConfirmPassword,
-                            decoration: InputDecoration(
-                              hintText: 'Re-enter your password',
-                              border: InputBorder.none,
-                              contentPadding: const EdgeInsets.symmetric(
-                                vertical: 8,
-                              ),
-                              suffixIcon: IconButton(
-                                icon: Icon(
-                                  _obscureConfirmPassword
-                                      ? Icons.visibility_off
-                                      : Icons.visibility,
-                                ),
-                                onPressed: () {
-                                  setState(() {
-                                    _obscureConfirmPassword =
-                                        !_obscureConfirmPassword;
-                                  });
-                                },
-                              ),
+                            _buildTextField(
+                              'Confirm Password',
+                              'confirmPassword',
+                              isPassword: true,
                             ),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please confirm your password';
-                              }
-                              if (value != _passwordController.text) {
-                                return 'Passwords do not match';
-                              }
-                              return null;
-                            },
-                          ),
-                          const Divider(),
-                          const SizedBox(height: 32),
-
-                          // Register Button
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
+                            AuthButton(
+                              text: 'Register',
                               onPressed: _submitForm,
-                              child: const Text(
-                                'Register',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.orange,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(30),
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 16,
-                                ),
-                                elevation: 2,
-                              ),
                             ),
-                          ),
-                          const SizedBox(height: 16),
-                          // Register prompt
-                          Center(
-                            child: RichText(
-                              text: TextSpan(
-                                text: "Already have an account? Login",
-                                style: const TextStyle(color: Colors.black),
-                                children: [
-                                  TextSpan(
-                                    text: " here",
-                                    recognizer:
-                                        TapGestureRecognizer()
-                                          ..onTap = () {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder:
-                                                    (context) => LoginScreen(),
-                                              ),
-                                            );
-                                          },
-                                    style: const TextStyle(
-                                      color: Colors.orange,
-                                      fontWeight: FontWeight.bold,
+                            const SizedBox(height: 16),
+                            Center(
+                              child: AuthLinkText(
+                                prefixText: "Already have an account? Login",
+                                linkText: " here",
+                                onTap:
+                                    () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder:
+                                            (context) => const LoginScreen(),
+                                      ),
                                     ),
-                                  ),
-                                ],
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -328,11 +151,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
             ],
           ),
-          // Profile Photo Circle (positioned between header and white container)
           Positioned(
-            top:
-                size.height * 0.25 -
-                50, // Half in header, half in white container
+            top: size.height * 0.25,
             left: 0,
             right: 0,
             child: Center(
@@ -357,7 +177,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     child:
                         _profileImage != null
                             ? Image.file(_profileImage!, fit: BoxFit.cover)
-                            : Icon(
+                            : const Icon(
                               Icons.add_a_photo,
                               size: 40,
                               color: Colors.grey,
@@ -374,11 +194,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   void _submitForm() {
     if (_formKey.currentState?.validate() ?? false) {
-      // Handle registration with profile image
+      // Handle registration
       print('Registration data:');
-      print('Name: ${_nameController.text}');
-      print('Email: ${_emailController.text}');
-      print('Phone: ${_phoneController.text}');
+      for (var entry in _controllers.entries) {
+        print('${entry.key}: ${entry.value.text}');
+      }
       print('Profile Image: ${_profileImage?.path}');
     }
   }
